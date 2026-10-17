@@ -7,3 +7,5 @@ reports/
 perf/results/
 perf/apache-jmeter-*/
 .pytest_cache/
+planted-bugs-answers.md
+
