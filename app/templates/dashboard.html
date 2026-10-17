@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="head">
+  <div>
+    <h1 data-testid="page-title">Good to see you, {{ user.full_name.split(' ')[0] }}</h1>
+    <p class="lede">{{ 'Pipeline across the whole team.' if user.role == 'admin' else 'Your assigned leads at a glance.' }}</p>
+  </div>
+  <a class="button" href="/leads/new" data-testid="new-lead-button">Add lead</a>
+</div>
+
+<section class="kpis" data-testid="kpi-strip" data-loaded="false" aria-label="Key numbers">
+  <div class="kpi"><div class="label">Leads</div><div class="value loading" data-kpi="total_leads" data-testid="kpi-total-leads"></div></div>
+  <div class="kpi"><div class="label">New</div><div class="value loading" data-kpi="by_status.new" data-testid="kpi-new"></div></div>
+  <div class="kpi"><div class="label">Converted</div><div class="value loading" data-kpi="by_status.converted" data-testid="kpi-converted"></div></div>
+  <div class="kpi"><div class="label">Conversion</div><div class="value loading" data-kpi="conversion_rate" data-pct data-testid="kpi-conversion-rate"></div></div>
+  <div class="kpi"><div class="label">Revenue</div><div class="value loading" data-kpi="total_revenue" data-money data-testid="kpi-revenue"></div></div>
+</section>
+
+<section class="panel">
+  <h2>Recently updated</h2>
+  {% if recent %}
+  <div class="table-wrap"><table data-testid="recent-leads">
+    <thead><tr><th>Name</th><th>Company</th><th>Status</th><th class="num">Score</th><th>Updated</th></tr></thead>
+    <tbody>
+    {% for l in recent %}
+      <tr data-testid="recent-lead-row" data-lead-id="{{ l.id }}">
+        <td><a href="/leads/{{ l.id }}">{{ l.first_name }} {{ l.last_name }}</a></td>
+        <td>{{ l.company or '—' }}</td>
+        <td><span class="pill {{ l.status }}">{{ l.status }}</span></td>
+        <td class="num">{{ l.score }}</td>
+        <td class="muted">{{ l.updated_at[:16].replace('T', ' ') }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}
+  <div class="empty" data-testid="empty-state">No leads yet. Add one or import a file.</div>
+  {% endif %}
+</section>
+{% endblock %}

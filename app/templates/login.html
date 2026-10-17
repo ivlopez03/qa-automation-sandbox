@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Sign in{% endblock %}
+{% block body %}
+<div class="login-wrap">
+  <div class="panel login-card">
+    <div class="brand">lead<span>flow</span></div>
+    <p class="lede">Sign in to work your lead pipeline.</p>
+    <form class="stack" data-api="/api/v1/auth/login" data-redirect="{{ next }}" data-testid="login-form" id="{{ rid('login-form') }}">
+      <label>Username <input name="username" autocomplete="username" required data-testid="login-username" id="{{ rid('username') }}"></label>
+      <label>Password <input name="password" type="password" autocomplete="current-password" required data-testid="login-password" id="{{ rid('password') }}"></label>
+      <div class="form-error" data-role="error" data-testid="login-error" role="alert"></div>
+      <button type="submit" data-testid="login-submit" id="{{ rid('login-submit') }}">Sign in</button>
+    </form>
+    <div class="creds" data-testid="demo-credentials">
+      Demo accounts: <code>admin / Admin123!</code> · <code>alice</code>, <code>bob</code>, <code>carol / User123!</code> · <code>dave</code> is deactivated.
+    </div>
+  </div>
+</div>
+{% endblock %}

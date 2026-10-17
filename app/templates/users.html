@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Users{% endblock %}
+{% block content %}
+<h1 data-testid="page-title">Users</h1>
+<p class="lede">Agents (role “user”) see and work only their own leads. Admins see everything.</p>
+<section class="panel">
+  <div class="table-wrap"><table data-testid="users-table">
+    <thead><tr><th class="num">ID</th><th>Username</th><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+    {% for u in users %}
+      <tr data-testid="user-row" data-username="{{ u.username }}">
+        <td class="num">{{ u.id }}</td><td>{{ u.username }}</td><td>{{ u.full_name }}</td><td>{{ u.email }}</td>
+        <td data-testid="user-role">{{ u.role }}</td>
+        <td data-testid="user-active">{{ 'Active' if u.is_active else 'Deactivated' }}</td>
+        <td>{% if u.id != user.id %}
+          <button class="secondary" data-testid="toggle-active" data-action-api="/api/v1/users/{{ u.id }}" data-method="PATCH"
+                  data-body='{"is_active": {{ 'false' if u.is_active else 'true' }}}' data-success="User updated">{{ 'Deactivate' if u.is_active else 'Reactivate' }}</button>
+        {% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+</section>
+<section class="panel">
+  <h2>Add user</h2>
+  <form class="stack" data-api="/api/v1/users" data-success="User added" data-testid="user-form">
+    <label>Username <small>lowercase letters, numbers, underscore</small><input name="username" required data-testid="new-username"></label>
+    <label>Full name <input name="full_name" required data-testid="new-full-name"></label>
+    <label>Email <input name="email" type="email" required data-testid="new-email"></label>
+    <label>Password <small>at least 8 characters</small><input name="password" type="password" required data-testid="new-password"></label>
+    <label>Role <select name="role" data-testid="new-role"><option value="user">user</option><option value="admin">admin</option></select></label>
+    <div class="form-error" data-role="error" data-testid="user-form-error"></div>
+    <button type="submit" data-testid="create-user">Add user</button>
+  </form>
+</section>
+{% endblock %}

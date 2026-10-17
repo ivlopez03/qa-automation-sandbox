@@ -1,0 +1,9 @@
+first_name,last_name,email,phone,company,source
+maria,lopez, Maria.Lopez@Initech.com ,1 (602) 555-0142,Initech,web
+JOHN,SMITH,john.smith@gmail.com,602.555.0177,,referral
+li,wei,li.wei@globex.io,,Globex,partner
+,nobody,missing.name@acme.com,6025550101,Acme,web
+bad,email,bad-email-at-acme.com,6025550102,Acme,ads
+short,phone,short.phone@acme.com,555-12,Acme,event
+wrong,source,wrong.source@acme.com,6025550103,Acme,billboard
+maria,lopez,maria.lopez@initech.com,6025550142,Initech,web

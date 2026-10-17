@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Test conditions{% endblock %}
+{% block content %}
+<h1 data-testid="page-title">Test conditions</h1>
+<p class="lede">Make the app behave like a bad day in production. Changes apply to everyone within a second. Send the header <code>X-Chaos-Disable: 1</code> to skip API chaos for setup calls.</p>
+<section class="panel">
+  <form class="stack" data-api="/api/v1/admin/settings" data-method="PUT" data-success="Conditions saved" data-testid="settings-form">
+    <label>API latency, up to (ms) <small>Each API call waits a random 0 to N ms</small>
+      <input name="chaos_latency_ms" type="number" min="0" max="10000" value="{{ settings.chaos_latency_ms }}" data-type="number" data-testid="set-latency"></label>
+    <label>API failure rate (0 to 1) <small>Share of API calls that return 503</small>
+      <input name="chaos_error_rate" type="number" min="0" max="1" step="0.01" value="{{ settings.chaos_error_rate }}" data-type="number" data-testid="set-error-rate"></label>
+    <label>Page readiness delay, up to (ms) <small>Dashboard numbers and some buttons become ready late</small>
+      <input name="ui_delay_ms" type="number" min="0" max="10000" value="{{ settings.ui_delay_ms }}" data-type="number" data-testid="set-ui-delay"></label>
+    <label>Random element IDs <small>Breaks tests that rely on id selectors</small>
+      <select name="ui_dynamic_ids" data-type="number" data-testid="set-dynamic-ids">
+        <option value="0" {% if not settings.ui_dynamic_ids %}selected{% endif %}>Off</option>
+        <option value="1" {% if settings.ui_dynamic_ids %}selected{% endif %}>On</option>
+      </select></label>
+    <label>Processing time per record (ms)
+      <input name="etl_delay_ms" type="number" min="0" max="5000" value="{{ settings.etl_delay_ms }}" data-type="number" data-testid="set-etl-delay"></label>
+    <label>Processing crash rate (0 to 1) <small>Chance per record that a run stops halfway</small>
+      <input name="etl_failure_rate" type="number" min="0" max="1" step="0.01" value="{{ settings.etl_failure_rate }}" data-type="number" data-testid="set-etl-failure"></label>
+    <div class="form-error" data-role="error" data-testid="settings-error"></div>
+    <div class="row">
+      <button type="submit" data-testid="save-settings">Save conditions</button>
+      <button type="button" class="secondary" data-testid="reset-settings" data-action-api="/api/v1/admin/settings" data-method="PUT"
+        data-body='{"chaos_latency_ms":0,"chaos_error_rate":0,"ui_delay_ms":0,"ui_dynamic_ids":0,"etl_delay_ms":20,"etl_failure_rate":0}' data-success="Conditions back to normal">Back to normal</button>
+    </div>
+  </form>
+</section>
+<section class="panel">
+  <h2>Reset all data</h2>
+  <p class="muted">Rebuilds the database from the fixed seed, so every run starts from the same data.</p>
+  <button class="danger" data-testid="reset-db" data-action-api="/api/v1/admin/reset" data-confirm="Erase everything and reseed?" data-success="Data reset">Reset all data</button>
+</section>
+{% endblock %}

@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Import leads{% endblock %}
+{% block content %}
+<h1 data-testid="page-title">Import leads</h1>
+<p class="lede">Imported records wait as pending until you process them. Processing cleans, validates, de-duplicates, scores and assigns each one.</p>
+
+<section class="panel">
+  <div class="head" style="margin-bottom:0">
+    <div><h2 style="margin:0">Processing</h2><p class="muted" style="margin:4px 0 0" data-testid="pending-count">{{ pending }} pending record{{ '' if pending == 1 else 's' }}</p></div>
+    <div class="row">
+      <button class="secondary" data-action-api="/api/v1/etl/pull-feed?count=25" data-success="25 records pulled from the vendor feed" data-testid="pull-feed">Pull 25 from vendor feed</button>
+      <button data-action-api="/api/v1/etl/run" data-poll-job data-testid="run-etl" {% if running %}disabled{% endif %}>Process pending records</button>
+    </div>
+  </div>
+  <div data-testid="job-progress" hidden style="margin-top:14px"></div>
+</section>
+
+<div class="grid-2">
+  <section class="panel">
+    <h2>Paste JSON</h2>
+    <form class="stack" data-api="/api/v1/leads/ingest" data-testid="json-ingest-form" data-success="Records received" id="json-form">
+      <label>One object or an array of objects
+        <textarea name="__json" data-testid="json-input">[{"first_name": "maria", "last_name": "lopez", "email": " Maria.Lopez@Initech.com ", "phone": "1 (602) 555-0142", "company": "Initech", "source": "web"}]</textarea>
+      </label>
+      <div class="form-error" data-role="error" data-testid="json-error"></div>
+      <button type="submit" data-testid="json-submit">Import JSON</button>
+    </form>
+  </section>
+  <section class="panel">
+    <h2>Upload CSV</h2>
+    <form class="stack" data-api="/api/v1/leads/ingest/csv" data-upload data-success="File received" data-testid="csv-ingest-form">
+      <label>CSV file <small>Header must include first_name, email and source</small>
+        <input type="file" name="file" accept=".csv" required data-testid="csv-input">
+      </label>
+      <div class="form-error" data-role="error" data-testid="csv-error"></div>
+      <button type="submit" data-testid="csv-submit">Upload CSV</button>
+    </form>
+  </section>
+</div>
+
+<section class="panel">
+  <h2>Recent runs</h2>
+  {% if jobs %}
+  <div class="table-wrap"><table data-testid="jobs-table">
+    <thead><tr><th>Job</th><th>Status</th><th class="num">Total</th><th class="num">Loaded</th><th class="num">Rejected</th><th class="num">Duplicates</th><th>Error</th><th>Started</th></tr></thead>
+    <tbody>{% for j in jobs %}<tr data-testid="job-row" data-job-id="{{ j.id }}"><td><code>{{ j.id }}</code></td><td><span class="pill {{ j.status }}">{{ j.status }}</span></td><td class="num">{{ j.total }}</td><td class="num">{{ j.processed }}</td><td class="num">{{ j.rejected }}</td><td class="num">{{ j.duplicates }}</td><td>{{ j.error or '' }}</td><td class="muted">{{ (j.started_at or '')[:19] }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+  {% else %}<div class="empty">No runs yet. Process pending records to start one.</div>{% endif %}
+</section>
+
+<section class="panel">
+  <h2>Latest rejected and duplicate records</h2>
+  {% if rejected %}
+  <div class="table-wrap"><table data-testid="rejected-table">
+    <thead><tr><th class="num">Raw ID</th><th>Channel</th><th>Reason</th><th>Payload</th></tr></thead>
+    <tbody>{% for r in rejected %}<tr data-testid="rejected-row"><td class="num">{{ r.id }}</td><td>{{ r.channel }}</td><td>{{ r.error }}</td><td><pre>{{ r.payload }}</pre></td></tr>{% endfor %}</tbody>
+  </table></div>
+  {% else %}<div class="empty">Nothing rejected yet.</div>{% endif %}
+</section>
+
+<script>
+// The JSON form posts the textarea contents as the raw body (not wrapped in an object).
+document.getElementById("json-form").addEventListener("submit", async (ev) => {
+  ev.preventDefault(); ev.stopImmediatePropagation();
+  const err = ev.target.querySelector("[data-role=error]");
+  let body;
+  try { body = JSON.parse(ev.target.querySelector("textarea").value); }
+  catch { err.textContent = "That isn't valid JSON. Check quotes and commas."; return; }
+  const res = await api("POST", "/api/v1/leads/ingest", body);
+  if (!res.ok) { err.textContent = errorText(res.data); return; }
+  sessionStorage.setItem("toast", `${res.data.received} record(s) received`);
+  location.reload();
+}, true);
+</script>
+{% endblock %}

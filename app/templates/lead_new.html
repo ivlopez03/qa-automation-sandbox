@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Add lead{% endblock %}
+{% block content %}
+<h1 data-testid="page-title">Add lead</h1>
+<p class="lede">The lead is scored and assigned to the least-busy agent automatically.</p>
+<section class="panel">
+  <form class="stack" data-api="/api/v1/leads" data-redirect="/leads/{id}" data-success="Lead added" data-testid="lead-form" id="{{ rid('lead-form') }}">
+    <div class="row">
+      <label style="flex:1">First name <input name="first_name" required maxlength="50" data-testid="input-first-name"></label>
+      <label style="flex:1">Last name <input name="last_name" data-testid="input-last-name"></label>
+    </div>
+    <label>Email <input name="email" type="email" required data-testid="input-email"></label>
+    <label>Phone <small>US numbers, any format</small><input name="phone" data-testid="input-phone"></label>
+    <label>Company <input name="company" data-testid="input-company"></label>
+    <label>Source
+      <select name="source" required data-testid="input-source">
+        <option value="">Choose a source</option>
+        {% for s in sources %}<option value="{{ s.code }}">{{ s.name }}</option>{% endfor %}
+      </select>
+    </label>
+    <div class="form-error" data-role="error" data-testid="form-error" role="alert"></div>
+    <div class="row">
+      <button type="submit" data-testid="save-lead" id="{{ rid('save-lead') }}">Add lead</button>
+      <a class="button secondary" href="/leads">Cancel</a>
+    </div>
+  </form>
+</section>
+{% endblock %}

@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Reports{% endblock %}
+{% block content %}
+<div class="head">
+  <div>
+    <h1 data-testid="page-title">Reports</h1>
+    <p class="lede">{{ 'Team-wide numbers.' if user.role == 'admin' else 'Numbers for your own leads only.' }} Every table here is also available from the API as JSON or CSV.</p>
+  </div>
+</div>
+
+<section class="panel">
+  <h2>Summary</h2>
+  <div class="table-wrap"><table data-testid="report-summary">
+    <tbody>
+      <tr><th>Total leads</th><td class="num" data-testid="summary-total-leads">{{ summary.total_leads }}</td></tr>
+      {% for s, n in summary.by_status.items() %}
+      <tr><th>{{ s|capitalize }}</th><td class="num" data-testid="summary-status-{{ s }}">{{ n }}</td></tr>
+      {% endfor %}
+      <tr><th>Conversion rate</th><td class="num" data-testid="summary-conversion-rate">{{ '%.2f'|format(summary.conversion_rate) }}%</td></tr>
+      <tr><th>Deals</th><td class="num" data-testid="summary-deals">{{ summary.deals }}</td></tr>
+      <tr><th>Revenue</th><td class="num" data-testid="summary-revenue">${{ '{:,.2f}'.format(summary.total_revenue) }}</td></tr>
+      <tr><th>Average deal</th><td class="num" data-testid="summary-avg-deal">${{ '{:,.2f}'.format(summary.avg_deal_size) }}</td></tr>
+      <tr><th>Open pipeline value</th><td class="num" data-testid="summary-pipeline">${{ '{:,.2f}'.format(summary.open_pipeline_value) }}</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section class="panel">
+  <div class="head" style="margin-bottom:8px"><h2>By source</h2><a href="/api/v1/reports/by-source?format=csv" class="button secondary" data-testid="download-by-source">Download CSV</a></div>
+  <div class="table-wrap"><table data-testid="report-by-source">
+    <thead><tr><th>Source</th><th class="num">Leads</th><th class="num">Converted</th><th class="num">Conversion</th><th class="num">Revenue</th><th class="num">Cost</th><th class="num">ROI</th></tr></thead>
+    <tbody>
+    {% for r in by_source %}
+      <tr data-testid="by-source-row" data-source="{{ r.source }}">
+        <td>{{ r.name }}</td><td class="num" data-col="leads">{{ r.leads }}</td><td class="num" data-col="converted">{{ r.converted }}</td>
+        <td class="num" data-col="conversion_rate">{{ '%.2f'|format(r.conversion_rate) }}%</td>
+        <td class="num" data-col="revenue">${{ '{:,.2f}'.format(r.revenue) }}</td><td class="num" data-col="cost">${{ '{:,.2f}'.format(r.cost) }}</td>
+        <td class="num" data-col="roi_pct">{{ '%.2f%%'|format(r.roi_pct) if r.roi_pct is not none else '—' }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+</section>
+
+<section class="panel">
+  <div class="head" style="margin-bottom:8px"><h2>By agent</h2><a href="/api/v1/reports/by-owner?format=csv" class="button secondary" data-testid="download-by-owner">Download CSV</a></div>
+  <div class="table-wrap"><table data-testid="report-by-owner">
+    <thead><tr><th>Agent</th><th class="num">Leads</th><th class="num">Open</th><th class="num">Converted</th><th class="num">Revenue</th></tr></thead>
+    <tbody>
+    {% for r in by_owner %}
+      <tr data-testid="by-owner-row" data-owner="{{ r.username }}">
+        <td>{{ r.username }}{% if not r.is_active %} <span class="muted">(inactive)</span>{% endif %}</td>
+        <td class="num" data-col="leads">{{ r.leads }}</td><td class="num" data-col="open_leads">{{ r.open_leads or 0 }}</td>
+        <td class="num" data-col="converted">{{ r.converted or 0 }}</td><td class="num" data-col="revenue">${{ '{:,.2f}'.format(r.revenue) }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+</section>
+
+{% if user.role == 'admin' %}
+<div class="grid-2">
+  <section class="panel">
+    <div class="head" style="margin-bottom:8px"><h2>Daily imports (last 14 days)</h2><a href="/api/v1/reports/daily-ingestion?format=csv" class="button secondary">Download CSV</a></div>
+    <div class="table-wrap"><table data-testid="report-daily">
+      <thead><tr><th>Day</th><th class="num">Received</th><th class="num">Loaded</th><th class="num">Rejected</th><th class="num">Duplicates</th><th class="num">Pending</th></tr></thead>
+      <tbody>{% for r in daily %}<tr data-testid="daily-row" data-day="{{ r.day }}"><td>{{ r.day }}</td><td class="num">{{ r.received }}</td><td class="num">{{ r.processed }}</td><td class="num">{{ r.rejected }}</td><td class="num">{{ r.duplicates }}</td><td class="num">{{ r.pending }}</td></tr>{% endfor %}</tbody>
+    </table></div>
+  </section>
+  <section class="panel">
+    <h2>Import reconciliation</h2>
+    <div class="table-wrap"><table data-testid="report-reconciliation">
+      <thead><tr><th>Check</th><th class="num">Expected</th><th class="num">Actual</th><th>Result</th></tr></thead>
+      <tbody>{% for c in recon.checks %}<tr data-testid="recon-check"><td>{{ c.name }}</td><td class="num">{{ c.expected }}</td><td class="num">{{ c.actual }}</td><td><span class="pill {{ 'passed' if c.passed else 'failed' }}">{{ 'pass' if c.passed else 'fail' }}</span></td></tr>{% endfor %}</tbody>
+    </table></div>
+  </section>
+</div>
+{% endif %}
+{% endblock %}

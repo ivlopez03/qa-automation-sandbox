@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+.venv/
+data/*.db*
+test-results/
+reports/
+perf/results/
+perf/apache-jmeter-*/
+.pytest_cache/

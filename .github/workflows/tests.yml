@@ -1,0 +1,46 @@
+name: tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Server mode"
+        type: choice
+        options: [normal, bugs]
+        default: normal
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      SANDBOX_DB: ${{ github.workspace }}/data/ci.db
+      BASE_URL: http://127.0.0.1:8000
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements-dev.txt
+      - run: python -m playwright install --with-deps chromium
+
+      - name: Start app
+        run: |
+          if [ "${{ inputs.mode }}" = "bugs" ]; then export SANDBOX_BUGS=1; fi
+          nohup python -m uvicorn app.main:app --port 8000 > server.log 2>&1 &
+          for i in $(seq 1 30); do curl -sf $BASE_URL/api/v1/health && break; sleep 1; done
+
+      - name: Run tests
+        run: python -m pytest --html=reports/report.html --self-contained-html --tracing retain-on-failure
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report
+          path: |
+            reports/
+            test-results/
+            server.log

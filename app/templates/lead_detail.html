@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}{{ lead.first_name }} {{ lead.last_name }}{% endblock %}
+{% block content %}
+<div class="head">
+  <div>
+    <h1 data-testid="lead-name">{{ lead.first_name }} {{ lead.last_name }}</h1>
+    <p class="lede">{{ lead.company or 'No company' }} · <span class="pill {{ lead.status }}" data-testid="lead-status">{{ lead.status }}</span></p>
+  </div>
+  {% if user.role == 'admin' %}
+  <button class="danger" data-testid="delete-lead" data-action-api="/api/v1/leads/{{ lead.id }}" data-method="DELETE"
+          data-confirm="Delete this lead and its history?" data-redirect="/leads" data-success="Lead deleted">Delete lead</button>
+  {% endif %}
+</div>
+
+<ol class="pipeline {{ 'lost' if lead.status == 'lost' else '' }}" data-testid="pipeline">
+  {% set order = ['new', 'contacted', 'qualified', 'converted'] %}
+  {% set idx = order.index(lead.status) if lead.status in order else -1 %}
+  {% for s in order %}
+  <li class="{{ 'current' if s == lead.status else ('done' if loop.index0 < idx else '') }}" data-step="{{ s }}">{{ s|capitalize }}</li>
+  {% endfor %}
+</ol>
+
+<div class="grid-2">
+  <section class="panel">
+    <h2>Details</h2>
+    <dl class="facts" data-testid="lead-facts">
+      <dt>Email</dt><dd data-testid="fact-email">{{ lead.email }}</dd>
+      <dt>Phone</dt><dd data-testid="fact-phone">{{ lead.phone or '—' }}</dd>
+      <dt>Source</dt><dd data-testid="fact-source">{{ lead.source }}</dd>
+      <dt>Score</dt><dd data-testid="fact-score">{{ lead.score }}</dd>
+      <dt>Est. value</dt><dd data-testid="fact-value">${{ '%.2f'|format(lead.estimated_value) }}</dd>
+      <dt>Owner</dt><dd data-testid="fact-owner">{{ lead.owner or 'Unassigned' }}</dd>
+      {% if deal %}<dt>Deal</dt><dd data-testid="fact-deal">${{ '%.2f'|format(deal.amount) }}</dd>{% endif %}
+      <dt>Created</dt><dd>{{ lead.created_at }}</dd>
+    </dl>
+  </section>
+
+  <section class="panel">
+    <h2>Move lead</h2>
+    {% if next_statuses %}
+    <form class="stack" data-api="/api/v1/leads/{{ lead.id }}/transition" data-success="Status updated" data-testid="transition-form">
+      <label>New status
+        <select name="to_status" required data-testid="transition-select" id="{{ rid('to-status') }}">
+          {% for s in next_statuses %}<option value="{{ s }}">{{ s }}</option>{% endfor %}
+        </select>
+      </label>
+      <label data-testid="amount-field" hidden>Deal amount (USD) <input name="amount" type="number" step="0.01" min="0.01" data-type="number" data-testid="transition-amount"></label>
+      <label>Note <small>optional</small><input name="note" maxlength="500" data-testid="transition-note"></label>
+      <div class="form-error" data-role="error" data-testid="transition-error" role="alert"></div>
+      <button type="submit" data-testid="transition-submit" id="{{ rid('transition-submit') }}" {% if ui_delay_ms %}disabled data-delayed-enable{% endif %}>Update status</button>
+    </form>
+    {% else %}
+    <p class="muted" data-testid="final-state">This lead is {{ lead.status }}. No further moves are possible.</p>
+    {% endif %}
+
+    {% if user.role == 'admin' %}
+    <h2 style="margin-top:24px">Reassign</h2>
+    <form class="row" data-api="/api/v1/leads/{{ lead.id }}" data-method="PATCH" data-success="Lead reassigned" data-testid="reassign-form">
+      <select name="owner_id" data-type="int-or-null" data-testid="reassign-select">
+        <option value="none">Unassigned</option>
+        {% for o in owners %}<option value="{{ o.id }}" {% if o.id == lead.owner_id %}selected{% endif %}>{{ o.username }}</option>{% endfor %}
+      </select>
+      <button type="submit" class="secondary" data-testid="reassign-submit">Reassign</button>
+      <div class="form-error" data-role="error" data-testid="reassign-error"></div>
+    </form>
+    {% endif %}
+  </section>
+</div>
+
+<section class="panel">
+  <h2>History</h2>
+  <ul class="timeline" data-testid="timeline">
+    {% for e in events %}
+    <li data-testid="timeline-event" data-event-type="{{ e.event_type }}">
+      <time>{{ e.created_at.replace('T', ' ')[:16] }} · {{ e.actor or 'system' }}</time>
+      {% if e.event_type == 'status_change' %}Moved from <b>{{ e.from_status }}</b> to <b>{{ e.to_status }}</b>
+      {% elif e.event_type == 'created' %}Lead created
+      {% else %}{{ e.event_type|capitalize }} ({{ e.note }}){% endif %}
+      {% if e.note and e.event_type == 'status_change' %}<div class="muted">{{ e.note }}</div>{% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endblock %}

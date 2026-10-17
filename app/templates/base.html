@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Leadflow{% endblock %} · Leadflow Sandbox</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body data-ui-delay="{{ ui_delay_ms }}" data-role="{{ user.role if user else 'anonymous' }}">
+{% block body %}
+<div class="shell">
+  <nav class="side" aria-label="Main" data-testid="sidebar">
+    <div class="brand">lead<span>flow</span></div>
+    {% set path = request.url.path %}
+    <a href="/dashboard" id="{{ rid('nav-dashboard') }}" data-testid="nav-dashboard" {% if path == '/dashboard' %}aria-current="page"{% endif %}>Dashboard</a>
+    <a href="/leads" id="{{ rid('nav-leads') }}" data-testid="nav-leads" {% if path.startswith('/leads') %}aria-current="page"{% endif %}>Leads</a>
+    <a href="/reports" id="{{ rid('nav-reports') }}" data-testid="nav-reports" {% if path == '/reports' %}aria-current="page"{% endif %}>Reports</a>
+    {% if user.role == 'admin' %}
+    <div class="group">Admin</div>
+    <a href="/ingest" data-testid="nav-ingest" {% if path == '/ingest' %}aria-current="page"{% endif %}>Import leads</a>
+    <a href="/admin/users" data-testid="nav-users" {% if path == '/admin/users' %}aria-current="page"{% endif %}>Users</a>
+    <a href="/admin/settings" data-testid="nav-settings" {% if path == '/admin/settings' %}aria-current="page"{% endif %}>Test conditions</a>
+    <a href="/docs" data-testid="nav-api-docs">API docs</a>
+    {% endif %}
+    <div class="who" data-testid="current-user">
+      <strong data-testid="current-username">{{ user.full_name }}</strong>
+      <span data-testid="current-role">{{ user.role }}</span> · <a href="/logout" data-testid="logout" style="padding:0;display:inline">Sign out</a>
+    </div>
+  </nav>
+  <main>
+    {% if vulns %}<div class="banner danger" data-testid="vulns-banner">Vulnerable mode is on. Security flaws are enabled on purpose — keep this instance local.</div>{% endif %}
+    {% if bugs %}<div class="banner" data-testid="bugs-banner">Planted bugs are on. Some report numbers are deliberately wrong.</div>{% endif %}
+    {% block content %}{% endblock %}
+  </main>
+</div>
+{% endblock %}
+<div id="toast" role="status" aria-live="polite" data-testid="toast"></div>
+<script src="/static/app.js"></script>
+</body>
+</html>
